@@ -1,0 +1,67 @@
+function IImageElement(data,parentContainer,globalData,comp,placeholder){
+    this.assetData = globalData.getAssetData(data.refId);
+    this._parent.constructor.call(this,data,parentContainer,globalData,comp,placeholder);
+}
+createElement(SVGBaseElement, IImageElement);
+
+IImageElement.prototype.createElements = function(){
+
+    var self = this;
+
+    var imageLoaded = function(){
+        self.innerElem.setAttributeNS('http://www.w3.org/1999/xlink','href',assetPath);
+        self.maskedElement = self.innerElem;
+    };
+
+    var img = new Image();
+    img.addEventListener('load', imageLoaded, false);
+    img.addEventListener('error', imageLoaded, false);
+
+    var assetPath = this.globalData.getAssetsPath(this.assetData);
+    img.src = assetPath;
+
+    this._parent.createElements.call(this);
+
+    this.innerElem = document.createElementNS(svgNS,'image');
+    this.innerElem.setAttribute('width',this.assetData.w+"px");
+    this.innerElem.setAttribute('height',this.assetData.h+"px");
+    if(this.layerElement === this.parentContainer){
+        this.appendNodeToParent(this.innerElem);
+    }else{
+        this.layerElement.appendChild(this.innerElem);
+    }
+    if(this.data.ln){
+        this.innerElem.setAttribute('id',this.data.ln);
+    }
+    if(this.data.cl){
+        this.innerElem.setAttribute('class',this.data.cl);
+    }
+
+};
+
+IImageElement.prototype.hide = function(){
+    if(!this.hidden){
+        this.innerElem.setAttribute('visibility','hidden');
+        this.hidden = true;
+    }
+};
+
+IImageElement.prototype.renderFrame = function(parentMatrix){
+    var renderParent = this._parent.renderFrame.call(this,parentMatrix);
+    if(renderParent===false){
+        this.hide();
+        return;
+    }
+    if(this.hidden){
+        this.hidden = false;
+        this.innerElem.setAttribute('visibility', 'visible');
+    }
+    if(this.firstFrame){
+        this.firstFrame = false;
+    }
+};
+
+IImageElement.prototype.destroy = function(){
+    this._parent.destroy.call();
+    this.innerElem =  null;
+};
